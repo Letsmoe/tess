@@ -1,7 +1,7 @@
-const example = `{{
-	x = {{#/usr/bin/python print(5) }};
-}}
-
+const example = `{%
+	x = {% #!/usr/bin/python print("%") %};
+%}
+{{x}}
 Hello World!`;
 class InputStream {
     constructor(input) {
@@ -41,7 +41,7 @@ class TokenStream {
     }
     readWhile(predicate) {
         var str = "";
-        while (!this.stream.eof() && predicate(this.stream.peek()))
+        while (!this.stream.eof() && predicate(this.stream.peek(), this.stream.peek(1)))
             str += this.stream.next();
         return str;
     }
@@ -49,23 +49,44 @@ class TokenStream {
         if (this.stream.eof())
             return null;
         var ch = this.stream.peek();
-        if (ch === "{") {
-            return { type: "l_curly", text: this.stream.next() };
+        var next = this.stream.peek(1);
+        if (ch === "{" && next === "{") {
+            this.stream.next();
+            this.stream.next();
+            return { type: "VariableOpen", text: "{{" };
         }
-        else if (ch === "}") {
-            return { type: "r_curly", text: this.stream.next() };
+        else if (ch === "}" && next === "}") {
+            this.stream.next();
+            this.stream.next();
+            return { type: "VariableClose", text: "}}" };
         }
-        else if (ch === "#") {
-            return { type: "hash", text: this.stream.next() };
+        else if (ch === "{" && next === "%") {
+            this.stream.next();
+            this.stream.next();
+            return { type: "LogicOpen", text: "{%" };
         }
-        else if (ch === "!") {
-            return { type: "exclamation", text: this.stream.next() };
+        else if (ch === "%" && next === "}") {
+            this.stream.next();
+            this.stream.next();
+            return { type: "LogicClose", text: "%}" };
         }
-        else if (ch !== " ") {
-            return { type: "string", text: this.readWhile(x => (x !== " ") && (x !== "{") && (x !== "}")) };
-        }
-        else if (ch === " ") {
-            return { type: "space", text: this.stream.next() };
+        else {
+            return { type: "string", text: this.readWhile((curr, next) => {
+                    let valid = true;
+                    if (curr === "{" && next === "{") {
+                        valid = false;
+                    }
+                    else if (curr === "}" && next === "}") {
+                        valid = false;
+                    }
+                    else if (curr === "{" && next === "%") {
+                        valid = false;
+                    }
+                    else if (curr === "%" && next === "}") {
+                        valid = false;
+                    }
+                    return valid;
+                }) };
         }
     }
     peek() {
@@ -90,67 +111,74 @@ class TokenStream {
     }
 }
 function parse(input) {
-    function isChar(char) {
-        const tok = input.peek();
-        return tok && (tok.type !== "string") && tok.text === char;
-    }
-    function parseBlock() {
-        input.next();
+    function parseLogicBlock() {
         input.next();
         let children = [];
-        let source = "";
-        if (input.peek().type === "hash") {
-            input.next();
-            source = input.next().text;
-        }
         while (!input.eof()) {
-            if (input.peek().type === "r_curly") {
-                input.next();
+            let tok = input.peek();
+            if (tok.type === "LogicClose") {
                 input.next();
                 break;
             }
-            ;
-            children.push(parseNext());
+            else {
+                let next = parseNext();
+                children.push(next);
+            }
         }
         return {
-            type: "block",
-            source,
+            type: "LogicBlock",
+            children
+        };
+    }
+    function parseVariableBlock() {
+        input.next();
+        let children = [];
+        while (!input.eof()) {
+            let tok = input.peek();
+            if (tok.type === "VariableClose") {
+                input.next();
+                break;
+            }
+            else {
+                let next = parseNext();
+                children.push(next);
+            }
+        }
+        return {
+            type: "VariableBlock",
             children
         };
     }
     function parseNext() {
         const tok = input.peek();
-        if (tok.type === "l_curly") {
-            return parseBlock();
+        if (tok.type === "VariableOpen") {
+            return parseVariableBlock();
+        }
+        else if (tok.type === "LogicOpen") {
+            return parseLogicBlock();
         }
         else {
-            input.next();
-            return tok;
+            return input.next();
         }
     }
-    function parseString() {
-        let content = "";
-        while (!input.eof() && ((input.peek().type === "string") || (input.peek().type === "space"))) {
-            content += input.next().text;
-        }
-        return { type: "string", content };
+    var prog = [];
+    while (!input.eof()) {
+        let next = parseNext();
+        prog.push(next);
     }
-    function parseToplevel() {
-        var prog = [];
-        while (!input.eof()) {
-            if (isChar("{")) {
-                let block = parseBlock();
-                prog.push(block);
-            }
-            else {
-                prog.push(parseString());
-            }
-        }
-        return { type: "Program", body: prog };
-    }
-    return parseToplevel();
+    return { type: "Program", children: prog };
 }
 const input = new InputStream(example);
 const tokens = new TokenStream(input);
 const ast = parse(tokens);
-console.log(JSON.stringify(ast, null, 2));
+function execute(ast) {
+    const recurse = (tree) => {
+        for (const child of tree.children) {
+            if (child.type === "LogicBlock") {
+                console.log(child);
+            }
+        }
+    };
+    recurse(ast);
+}
+execute(ast);
