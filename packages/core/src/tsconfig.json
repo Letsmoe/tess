@@ -1,0 +1,14 @@
+{
+	"compileOnSave": true,
+	"compilerOptions": {
+		"outDir": "../dist/",
+		"declaration": true,
+		"declarationDir": "../typings/",
+		"rootDir": "./",
+		"declarationMap": true,
+		"allowSyntheticDefaultImports": true,
+		"lib": ["ES2020"],
+		"moduleResolution": "node",
+		"module": "ES2015"
+	}
+}
