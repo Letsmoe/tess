@@ -1,15 +1,18 @@
 {
-	"name": "@tess/core",
+	"name": "@markdocks/core",
 	"version": "1.0.0",
 	"type": "module",
-	"description": "Core package of tess templating engine.",
-	"main": "index.js",
+	"description": "A general purpose templating engine.",
+	"main": "dist/index.js",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1"
 	},
 	"keywords": [
 		"templating"
 	],
-	"author": "Letsmoe",
-	"license": "MIT"
+	"author": "letsmoe",
+	"license": "MIT",
+	"dependencies": {
+		"@types/node": "^18.7.2"
+	}
 }

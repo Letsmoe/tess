@@ -1,14 +1,14 @@
 {
-	"compileOnSave": true,
 	"compilerOptions": {
+		"module": "esnext",
+		"moduleResolution": "node",
+		"target": "es2017",
+		"lib": ["es2020", "DOM"],
 		"outDir": "../dist/",
 		"declaration": true,
-		"declarationDir": "../typings/",
-		"rootDir": "./",
-		"declarationMap": true,
-		"allowSyntheticDefaultImports": true,
-		"lib": ["ES2020"],
-		"moduleResolution": "node",
-		"module": "ES2015"
-	}
+		"declarationDir": "../dist/",
+		"sourceMap": true,
+		"allowSyntheticDefaultImports": true
+	},
+	"compileOnSave": true
 }
