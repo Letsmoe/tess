@@ -1,0 +1,6 @@
+{#define string "Hello There"}
+# Heading
+
+{#each char of string}
+Character: "{{char}}"
+{/each}

@@ -1,5 +1,5 @@
 {
-	"name": "@markdocks/core",
+	"name": "@tess/core",
 	"version": "1.0.0",
 	"type": "module",
 	"description": "A general purpose templating engine.",

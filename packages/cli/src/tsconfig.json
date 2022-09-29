@@ -1,0 +1,14 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"moduleResolution": "node",
+		"target": "es2017",
+		"lib": ["es2020", "DOM"],
+		"outDir": "../dist/",
+		"declaration": true,
+		"declarationDir": "../dist/",
+		"sourceMap": true,
+		"allowSyntheticDefaultImports": true
+	},
+	"compileOnSave": true
+}

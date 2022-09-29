@@ -1,0 +1,25 @@
+{
+	"name": "@tess/cli",
+	"version": "1.0.0",
+	"type": "module",
+	"description": "Command line interface for tess template engine.",
+	"main": "dist/index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1"
+	},
+	"keywords": [
+		"template-engine",
+		"tess"
+	],
+	"author": "letsmoe",
+	"license": "MIT",
+	"dependencies": {
+		"colarg": "^2.0.1"
+	},
+	"devDependencies": {
+		"@types/node": "^18.7.23"
+	},
+	"bin": {
+		"tess": "dist/index.js"
+	}
+}
