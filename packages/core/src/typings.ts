@@ -12,4 +12,11 @@ interface TagOptions {
 type BeginCallback = (kwargs: Kwargs | string, args: Args) => string;
 type EndCallback = (kwargs: Kwargs | string, args: Args) => string;
 
-export { Kwargs, Args, Environment, TagOptions, BeginCallback, EndCallback }
+interface TessOptions {
+	/**
+	 * The language used as a default when no lang parameters is specified in `{#code}` blocks.
+	 */
+	defaultLanguage?: string;
+}
+
+export { Kwargs, Args, Environment, TagOptions, BeginCallback, EndCallback, TessOptions }

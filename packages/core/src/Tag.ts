@@ -1,7 +1,7 @@
-import { Args, BeginCallback, EndCallback, Kwargs, TagOptions } from "./typings.js";
+import { Args, BeginCallback, EndCallback, Kwargs, TagOptions, TessOptions } from "./typings.js";
 
 class Tag {
-	constructor(public name: string, public callback: (kwargs: Kwargs | string, ...args: Args) => any, public options: TagOptions = {}, onBegin: BeginCallback = () => "", onEnd: EndCallback = () => "") {
+	constructor(public name: string, public callback: (options: TessOptions, kwargs: Kwargs | string, ...args: Args) => any, public options: TagOptions = {}, onBegin: BeginCallback = () => "", onEnd: EndCallback = () => "") {
 		this.options = Object.assign({
 			selfClosing: false,
 			rawArgumentString: false,

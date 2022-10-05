@@ -1,14 +1,7 @@
 import { CodeBuilder } from "./CodeBuilder.js";
 import { DEFAULT_ENVIRONMENT } from "./Environment.js";
 import { LanguageHandler } from "./LanguageHandler.js";
-import { Args, Environment, Kwargs } from "./typings.js";
-
-interface TessOptions {
-	/**
-	 * The language used as a default when no lang parameters is specified in `{#code}` blocks.
-	 */
-	defaultLanguage?: string;
-}
+import { Args, Environment, Kwargs, TessOptions } from "./typings.js";
 
 class Tess {
 	private options: TessOptions;
@@ -86,7 +79,7 @@ class Tess {
 					beginString = tag.onBegin(kwargs, args);
 					// We want to push the begin string right onto our code.
 					code.addLine(beginString);
-					tag.callback(kwargs, args);
+					tag.callback(this.options, kwargs, args);
 					
 					if (tag.options.selfClosing === true) {
 						// If the tag is self-closing, we don't need to push the name onto the operation stack.
