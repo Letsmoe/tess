@@ -1,7 +1,6 @@
 class Tag {
-    constructor(name, callback, options = {}, onBegin = () => "", onEnd = () => "") {
+    constructor(name = "", options = {}) {
         this.name = name;
-        this.callback = callback;
         this.options = options;
         this.options = Object.assign({
             selfClosing: false,
@@ -11,15 +10,14 @@ class Tag {
             // This tag is self-closing, meaning that it will not need an end tag.
             // Like this: {#block arg kwarg=""} 
         }
-        this.onBegin = onBegin;
-        this.onEnd = onEnd;
     }
+    onUse(options, kwargs, ...args) { }
     /**
      * A function that is called once a matching tag has been found.
      * It should return a string in JS format which can be executed later on.
      * @returns A string which will be inserted at the beginning of the tag, this will end up in the compiled code.
      */
-    onBegin(kwargs, args) {
+    onTagStart(kwargs, args, caller) {
         return "";
     }
     /**
@@ -29,7 +27,7 @@ class Tag {
      * @param args A list of arguments which were passed to the directive.
      * @returns A string which will be inserted at the end of the tag, this will end up in the compiled code.
      */
-    onEnd(kwargs, args) {
+    onTagEnd(kwargs, args, caller) {
         return "";
     }
 }

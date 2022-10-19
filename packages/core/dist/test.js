@@ -10,30 +10,25 @@ jsHandler.execute = (code) => {
 setGlobalHandler(jsHandler);
 let engine = new Tess({ defaultLanguage: "javascript" });
 engine.compile(`
-{#define name "awd"}
+# Hey There!
 
-{#if name == "Letsmoe"}
-Letsmoe {{name}}!
-{:elif name == "John"}
-John {{name}}!
-{:else}
-Hey there, {{name}}!
-{/if}
+{{ table_of_contents(__HEADINGS__) }}
 
-{#each topic of topics}
-You like doing {{upper(topic)}}?
+
+{#each heading of __HEADINGS__}
+{{ upper(heading) }}
 {/each}
-
-{#code var="x"}
-x = 5;
-return x;
-{/code}
-
-{{x}}
 `);
 let output = await engine.render({
+    "__HEADINGS__": [
+        "Why you don't suck!",
+        "What you're up to."
+    ],
     topics: ["Juggling"],
     upper: (x) => x.toUpperCase(),
+    table_of_contents: (content) => {
+        return content.map(x => `<h1>${x}</h1>`).join("");
+    }
 });
 console.log(output);
 //# sourceMappingURL=test.js.map

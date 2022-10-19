@@ -1,31 +1,18 @@
-import { Tag } from "./Tag.js";
-const TAG_EACH = new Tag("each", () => { }, { rawArgumentString: true, selfClosing: false }, (str) => {
-    return `for (${str}) {`;
-}, (str) => {
-    return "}";
-});
-const TAG_IF = new Tag("if", () => { }, { rawArgumentString: true, selfClosing: false }, (str) => {
-    return `if (${str}) {`;
-}, (str) => {
-    return "}";
-});
-const TAG_DEFINE = new Tag("define", () => { }, { selfClosing: true, rawArgumentString: false }, (kwargs, args) => {
-    return `const ${args[0]} = "${args[1]}";`;
-}, () => {
-    return "";
-});
-const TAG_ELIF = new Tag("elif", () => { }, { selfClosing: true, rawArgumentString: true }, (str) => {
-    return `} else if (${str}) {`;
-});
-const TAG_ELSE = new Tag("else", () => { }, { selfClosing: true, rawArgumentString: true }, (str) => {
-    return `} else {`;
-});
+import { CodeTag } from "./tags/CodeTag.js";
+import { DefineCommand } from "./tags/DefineCommand.js";
+import { EachTag } from "./tags/EachTag.js";
+import { ElseIfTag } from "./tags/ElseIfTag.js";
+import { ElseTag } from "./tags/ElseTag.js";
+import { IfTag } from "./tags/IfTag.js";
+import { LangCommand } from "./tags/LangCommand.js";
 const DEFAULT_ENVIRONMENT = {
-    "each": TAG_EACH,
-    "if": TAG_IF,
-    "define": TAG_DEFINE,
-    "elif": TAG_ELIF,
-    "else": TAG_ELSE
+    "each": EachTag,
+    "if": IfTag,
+    "define": DefineCommand,
+    "elif": ElseIfTag,
+    "else": ElseTag,
+    "lang": LangCommand,
+    "code": CodeTag
 };
 export { DEFAULT_ENVIRONMENT };
 //# sourceMappingURL=Environment.js.map

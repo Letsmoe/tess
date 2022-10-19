@@ -1,20 +1,13 @@
 import { LanguageHandler } from "./LanguageHandler.js";
-import { Environment } from "./typings.js";
-interface TessOptions {
-    /**
-     * The language used as a default when no lang parameters is specified in `{#code}` blocks.
-     */
-    defaultLanguage?: string;
-}
+import { TextBuffer } from "./TextBuffer.js";
+import { Environment, TessOptions } from "./typings.js";
 declare class Tess {
     environment: Environment;
-    private options;
+    options: TessOptions;
     constructor(options?: TessOptions, environment?: Environment);
     private code;
-    private buffered;
-    private oldBuffer;
+    private buffer;
     private opsStack;
-    private _render_function;
     /**
      *
      * @param text The text to construct a template base from
@@ -31,11 +24,20 @@ declare class Tess {
     private parseArguments;
     private languageHandlers;
     /**
-     * Registers a new language handler for controlling requests on `{#code}` blocks.
-     * @param languages An array of languages or a single language to register a language handler onto.
-     * @param handler A language handler. It will handle all requests that are made when the user uses the specified language in his/her code.
+     * A method removing a language handler or TextBuffer from the current class instance.
+     * When a language handler is passed, it will be matched against the assigned ones, only those who were assigned the same Symbol will be removed.
+     * A TextBuffer will cause the instance to revert to its original state, using the default buffer.
+     * @param item A LanguageHandler or TextBuffer to match against.
+     * @param args Some additional arguments that might be required for a specific process.
      */
-    languageHandler(handler: LanguageHandler, languages?: string | string[]): void;
+    detach(item: TextBuffer | LanguageHandler, ...args: any[]): void;
+    /**
+     * Attaches a new buffer or language handler to the current class instance depending on which type was passed.
+     * @param item (TextBuffer | LanguageHandler) The buffer or language handler to attach.
+     * @param args string[] Additional arguments to be passed for the initialization.
+     * @return void
+     */
+    attach(item: TextBuffer | LanguageHandler, ...args: any[]): void;
     private _execute_code;
     /**
      * Renders the template with the given variables.
@@ -45,6 +47,8 @@ declare class Tess {
     render(context?: any): Promise<any>;
     private flushOutput;
     private _syntax_error;
+    private addPreamble;
+    private addPostamble;
 }
 declare const globalLanguageHandlers: {};
 declare function setGlobalHandler(handler: LanguageHandler, languages?: string | string[]): void;

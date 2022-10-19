@@ -1,43 +1,42 @@
 import { CodeBuilder } from "./CodeBuilder.js";
 import { DEFAULT_ENVIRONMENT } from "./Environment.js";
 import { LanguageHandler } from "./LanguageHandler.js";
+import { Tag } from "./Tag.js";
+import { TextBuffer } from "./TextBuffer.js";
 import { Args, Environment, Kwargs, TessOptions } from "./typings.js";
 
+const defaultBuffer = new TextBuffer();
+defaultBuffer.onFlush = (buffer) => {
+	return `extend_result(${buffer.join(", ")});`;
+} 
+
 class Tess {
-	private options: TessOptions;
+	public options: TessOptions;
 	public constructor(options: TessOptions = {}, public environment: Environment = DEFAULT_ENVIRONMENT) {
 		this.options = Object.assign(
 			{
 				defaultLanguage: "",
+				generateWrapper: true
 			},
 			options
 		);
 	}
 	private code = new CodeBuilder();
-	private buffered = [];
-	private oldBuffer = [];
+	private buffer = defaultBuffer;
 	private opsStack = [];
-	private _render_function: Function;
 	/**
 	 *
 	 * @param text The text to construct a template base from
 	 */
 	public compile(text: string) {
-		this.oldBuffer = [];
 		this.code = new CodeBuilder();
-		this.buffered = [];
+		this.buffer = defaultBuffer;
 		this.opsStack = [];
-		this._render_function = null;
 		const code = this.code;
-		code.addLine(
-			"return async function render_function(%s, _execute_code) {"
-		);
-		// Firstly, we need to unfold the context into the current environment.
-		code.addLine("const result = [];");
-		code.addLine(
-			"const extend_result = (...x) => x.map(y => result.push(y));"
-		);
-		code.addLine("const to_str = (x) => (x && x.toString()) || '';");
+		if (this.options.generateWrapper) {
+			this.addPreamble();
+		}
+		
 		// Split the text based on tokens
 		const tokens = text.split(
 			/({{.*?}}|{%.*?}|{\/.*?}|{#.*?}|{:.*?}|{!.*?})/gs
@@ -50,7 +49,7 @@ class Tess {
 			} else if (token.startsWith("{{")) {
 				// Expression to evaluate.
 				const expr = token.substring(2, token.length - 2).trim();
-				this.buffered.push(`to_str(${expr})`);
+				this.buffer.push(`to_str(${expr})`);
 			} else if (token.startsWith("{#") || token.startsWith("{:")) {
 				// Action tag: split into words and parse further.
 				this.flushOutput();
@@ -63,9 +62,9 @@ class Tess {
 				const tagName = words[0]
 				// Check if the tag name exists in the environment.
 				if (this.environment.hasOwnProperty(tagName)) {
-					let beginString: string, kwargs: Kwargs | string, args: Args;
+					let beginString: string | void, kwargs: Kwargs | string, args: Args;
 					// If it is present in the environment, parse the arguments and keywords arguments and call the onBegin and callback method on the Tag.
-					const tag = this.environment[tagName];
+					const tag = new (this.environment[tagName])();
 					const argString: string = token.substring(2 + tagName.length, token.length - 1).trim();
 					if (tag.options.rawArgumentString) {
 						kwargs = argString;
@@ -76,34 +75,27 @@ class Tess {
 						args = result.args;
 					}
 
-					beginString = tag.onBegin(kwargs, args);
+					beginString = tag.onTagStart(kwargs, args, this);
 					// We want to push the begin string right onto our code.
-					code.addLine(beginString);
-					tag.callback(this.options, kwargs, args);
+					if (beginString) {
+						code.addLine(beginString);
+					}
+					tag.onUse(this.options, kwargs, args);
 					
 					if (tag.options.selfClosing === true) {
 						// If the tag is self-closing, we don't need to push the name onto the operation stack.
 						// We can also just call the onEnd method right away.
-						const endString = tag.onEnd(kwargs, args);
+						const endString = tag.onTagEnd(kwargs, args);
 						// Add the code to our codeBuilder
-						code.addLine(endString);
+						if (endString) {
+							code.addLine(endString);
+						}
 					} else {
 						// Push the name and the arguments onto the operation stack.
-						this.opsStack.push({ kwargs, args, name: tagName });
+						this.opsStack.push({ kwargs, args, tag });
 					}
-				}
-
-				if (words[0] === "code") {
-					// We need to parse named parameters here. (lang="python") without splitting at every whitespace. That won't work.
-					const { kwargs, args } = this.parseArguments(
-						words.slice(1).join(" ")
-					);
-					// If no lang parameter was passed, we can use the options default one.
-					kwargs.lang = kwargs.lang || this.options.defaultLanguage;
-					this.opsStack.push({ kwargs, args, name: "code" });
-					// Now we need to redirect the buffer, to take the content literally.
-					this.oldBuffer = this.buffered;
-					this.buffered = [];
+				} else {
+					this._syntax_error("Call to undefined method", tagName);
 				}
 			} else if (token.startsWith("{/")) {
 				const words = token
@@ -113,46 +105,28 @@ class Tess {
 				const endWhat = words[0];
 				// End something: Pop the ops stack.
 				if (words.length != 1) {
-					this._syntax_error("Don't understand end", token);
+					this._syntax_error("Malformed end tag", token);
 				}
 
 				if (this.opsStack.length == 0) {
 					this._syntax_error("Too many ends", token);
 				}
 				const startWhat = this.opsStack.pop();
-				if (startWhat.name != endWhat) {
+				if (startWhat.tag.name != endWhat) {
 					this._syntax_error("Mismatched end tag", endWhat);
-				}
-
-				if (endWhat == "code") {
-					if (startWhat.kwargs.var) {
-						// Assign the output of the code to a variable
-						code.addLine(
-							`let ${startWhat.kwargs.var} = await _execute_code("${startWhat.kwargs.lang}", [`
-						);
-					} else {
-						code.addLine(
-							`await _execute_code("${startWhat.kwargs.lang}", [`
-						);
-					}
-					// Output the buffer literally into a function that will handle the call.
-					// Assign the old buffer so it will become the current buffer.
-					this.buffered.map((x) => {
-						code.addLine(x);
-					});
-					code.addLine(`])`);
-					this.buffered = this.oldBuffer;
-					continue;
 				}
 
 				this.flushOutput();
 
-				this.code.addLine(this.environment[startWhat.name].onEnd(startWhat.kwargs, startWhat.args));
-				//this.code.addLine("}");
+				const endString = startWhat.tag.onTagEnd(startWhat.kwargs, startWhat.args, this);
+
+				if (endString) {
+					this.code.addLine(endString);
+				}
 			} else {
 				// Literal content. Output if not empty.
-				if (token.trim().length > 0) {
-					this.buffered.push(JSON.stringify(token));
+				if (token.match(/[^\t \r]/g)) {
+					this.buffer.push(JSON.stringify(token));
 				}
 			}
 		}
@@ -162,8 +136,9 @@ class Tess {
 		}
 
 		this.flushOutput();
-		code.addLine("return result.join('');");
-		code.addLine("}");
+		if (this.options.generateWrapper) {
+			this.addPostamble();
+		}
 	}
 
 	/**
@@ -179,15 +154,15 @@ class Tess {
 		const args: Args = [];
 		// At first we can remove the keywords arguments since they are the easiest to parse.
 		// For now we just want to find strings as values.
-		str = str.replace(/(.*?)="((?:[^"\\]|\\.)*)"/g, (all, name, value) => {
-			kwargs[name] = value;
+		str = str.replace(/([A-z0-9?!-_.;]+)=(.*),?/g, (all, name, value) => {
+			kwargs[name] = JSON.parse(value);
 			return "";
 		})
 		
 		// Now we can run over the argument and push them into the args array.
-		const matches = Array.from(str.matchAll(/(?:"(.*?)"|([^ ]+))/g));
+		const matches = str.split(/(?<=")\s*,/).map(x => x.trim()).filter(x => x);
 		for (const match of matches) {
-			args.push(match[1] || match[0])
+			args.push(JSON.parse(match))
 		}
 
 		return { kwargs, args };
@@ -195,23 +170,43 @@ class Tess {
 
 	private languageHandlers: { [key: string]: LanguageHandler } =
 		globalLanguageHandlers;
+
 	/**
-	 * Registers a new language handler for controlling requests on `{#code}` blocks.
-	 * @param languages An array of languages or a single language to register a language handler onto.
-	 * @param handler A language handler. It will handle all requests that are made when the user uses the specified language in his/her code.
+	 * A method removing a language handler or TextBuffer from the current class instance.
+	 * When a language handler is passed, it will be matched against the assigned ones, only those who were assigned the same Symbol will be removed.
+	 * A TextBuffer will cause the instance to revert to its original state, using the default buffer.
+	 * @param item A LanguageHandler or TextBuffer to match against.
+	 * @param args Some additional arguments that might be required for a specific process.
 	 */
-	public languageHandler(
-		handler: LanguageHandler,
-		languages: string | string[] = []
-	): void {
-		// Convert languages to a one-dimensional array, this will ensure that when a string is passed we get an array as well.
-		// Since you might want to specify other languages that can be handled by a specific handler as well as others, optional languages can be passed as second parameter.
-		// Normally, the languages will be pulled from the handler.
-		languages = ([languages].flat(Infinity) as string[]).concat(
-			handler.languages
-		);
-		for (const lang of languages) {
-			this.languageHandlers[lang] = handler;
+	public detach(item: TextBuffer | LanguageHandler, ...args: any[]): void {
+		if (item instanceof TextBuffer) {
+			this.buffer = defaultBuffer;
+		} else if (item instanceof LanguageHandler) {
+			for (const lang in this.languageHandlers) {
+				// We iterate through every language handler that has been assigned, if we find that the two classes match
+				// we need to remove the language, strict equality will cause two objects to only match if they're the same Symbol.
+				let handler = this.languageHandlers[lang];
+				if (handler === item) {
+					delete this.languageHandlers[lang];
+				}
+			}
+		}
+	}
+
+	/**
+	 * Attaches a new buffer or language handler to the current class instance depending on which type was passed.
+	 * @param item (TextBuffer | LanguageHandler) The buffer or language handler to attach.
+	 * @param args string[] Additional arguments to be passed for the initialization.
+	 * @return void
+	 */
+	public attach(item: TextBuffer | LanguageHandler, ...args: any[]): void {
+		if (item instanceof TextBuffer) {
+			this.buffer = item;
+		} else if (item instanceof LanguageHandler) {
+			let languages = args[0].flat(Infinity).concat(item.languages);
+			for (const lang of languages) {
+				this.languageHandlers[lang] = item;
+			}
 		}
 	}
 
@@ -238,21 +233,35 @@ class Tess {
 	 */
 	public async render(context = null) {
 		// Make the complete context we'll use.
-		this._render_function = this.code.getRenderFunction(context);
-		return await this._render_function(
+		return await this.code.getRenderFunction(context)(
 			context,
 			this._execute_code.bind(this)
 		);
 	}
 
 	private flushOutput() {
-		this.code.addLine(`extend_result(${this.buffered.join(", ")});`);
-		// Reset the buffer
-		this.buffered = [];
+		this.code.addLine(this.buffer.flush());
 	}
 
 	private _syntax_error(msg: string, thing: any) {
 		throw new SyntaxError(`${msg}: ${thing}`);
+	}
+
+	private addPreamble() {
+		this.code.addLine(
+			"return async function render_function(%s, _execute_code) {"
+		);
+		// Firstly, we need to unfold the context into the current environment.
+		this.code.addLine("const result = [];");
+		this.code.addLine(
+			"const extend_result = (...x) => x.map(y => result.push(y));"
+		);
+		this.code.addLine("const to_str = (x) => (x && x.toString()) || '';");
+	}
+
+	private addPostamble() {
+		this.code.addLine("return result.join('');");
+		this.code.addLine("}");
 	}
 }
 

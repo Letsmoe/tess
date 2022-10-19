@@ -1,15 +1,16 @@
-import { Args, BeginCallback, EndCallback, Kwargs, TagOptions } from "./typings.js";
+import { Tess } from "./Tess.js";
+import { Args, Kwargs, TagOptions, TessOptions } from "./typings.js";
 declare class Tag {
     name: string;
-    callback: (kwargs: Kwargs | string, ...args: Args) => any;
     options: TagOptions;
-    constructor(name: string, callback: (kwargs: Kwargs | string, ...args: Args) => any, options?: TagOptions, onBegin?: BeginCallback, onEnd?: EndCallback);
+    constructor(name?: string, options?: TagOptions);
+    onUse(options: TessOptions, kwargs: Kwargs | string, ...args: Args): void;
     /**
      * A function that is called once a matching tag has been found.
      * It should return a string in JS format which can be executed later on.
      * @returns A string which will be inserted at the beginning of the tag, this will end up in the compiled code.
      */
-    onBegin(kwargs: Kwargs | string, args?: Args): string;
+    onTagStart(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void;
     /**
      * A function that is called once a matching tag has ended.
      * It should return a string in JS format which can be executed later on.
@@ -17,6 +18,6 @@ declare class Tag {
      * @param args A list of arguments which were passed to the directive.
      * @returns A string which will be inserted at the end of the tag, this will end up in the compiled code.
      */
-    onEnd(kwargs: Kwargs | string, args?: Args): string;
+    onTagEnd(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void;
 }
 export { Tag };
