@@ -14,14 +14,14 @@ class Tag {
 		}
 	}
 
-	public onUse(options: TessOptions, kwargs: Kwargs | string, ...args: Args): void {}
+	public onUse(options: TessOptions, kwargs: Kwargs | string, ...args: Args): void | never {}
 
 	/**
 	 * A function that is called once a matching tag has been found.
 	 * It should return a string in JS format which can be executed later on.
 	 * @returns A string which will be inserted at the beginning of the tag, this will end up in the compiled code.
 	 */
-	public onTagStart(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void {
+	public onTagStart(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void | Promise<string> {
 		return "";
 	}
 
@@ -32,7 +32,7 @@ class Tag {
 	 * @param args A list of arguments which were passed to the directive.
 	 * @returns A string which will be inserted at the end of the tag, this will end up in the compiled code.
 	 */
-	public onTagEnd(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void {
+	public onTagEnd(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void | Promise<string> {
 		return "";
 	}
 }

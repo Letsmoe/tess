@@ -11,13 +11,7 @@ setGlobalHandler(jsHandler);
 let engine = new Tess({ defaultLanguage: "javascript" });
 engine.compile(`
 # Hey There!
-
-{{ table_of_contents(__HEADINGS__) }}
-
-
-{#each heading of __HEADINGS__}
-{{ upper(heading) }}
-{/each}
+{#require ".gitattributes"}
 `);
 let output = await engine.render({
     "__HEADINGS__": [

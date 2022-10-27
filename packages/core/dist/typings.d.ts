@@ -5,7 +5,7 @@ declare type Kwargs = {
 };
 declare type Args = any[];
 declare type Environment = {
-    [key: string]: Tag;
+    [key: string]: typeof Tag;
 };
 interface TagOptions {
     selfClosing?: boolean;

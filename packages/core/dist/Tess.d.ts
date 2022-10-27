@@ -8,11 +8,13 @@ declare class Tess {
     private code;
     private buffer;
     private opsStack;
+    getOptions(): TessOptions;
+    getEnvironment(): Environment;
     /**
      *
      * @param text The text to construct a template base from
      */
-    compile(text: string): void;
+    compile(text: String): Promise<void>;
     /**
      * A function that will take a string to parse and return an object containing keyword arguments and default arguments.
      * Example:
@@ -45,6 +47,7 @@ declare class Tess {
      * @returns
      */
     render(context?: any): Promise<any>;
+    getCode(): string;
     private flushOutput;
     private _syntax_error;
     private addPreamble;

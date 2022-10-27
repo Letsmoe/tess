@@ -18,11 +18,17 @@ class Tess {
             generateWrapper: true
         }, options);
     }
+    getOptions() {
+        return Object.assign({}, this.options);
+    }
+    getEnvironment() {
+        return this.environment;
+    }
     /**
      *
      * @param text The text to construct a template base from
      */
-    compile(text) {
+    async compile(text) {
         this.code = new CodeBuilder();
         this.buffer = defaultBuffer;
         this.opsStack = [];
@@ -69,15 +75,19 @@ class Tess {
                     }
                     beginString = tag.onTagStart(kwargs, args, this);
                     // We want to push the begin string right onto our code.
+                    if (beginString instanceof Promise) {
+                        beginString = await beginString;
+                    }
                     if (beginString) {
                         code.addLine(beginString);
                     }
                     tag.onUse(this.options, kwargs, args);
                     if (tag.options.selfClosing === true) {
-                        // If the tag is self-closing, we don't need to push the name onto the operation stack.
-                        // We can also just call the onEnd method right away.
-                        const endString = tag.onTagEnd(kwargs, args);
+                        let endString = tag.onTagEnd(kwargs, args);
                         // Add the code to our codeBuilder
+                        if (endString instanceof Promise) {
+                            endString = await endString;
+                        }
                         if (endString) {
                             code.addLine(endString);
                         }
@@ -108,11 +118,14 @@ class Tess {
                 if (startWhat.tag.name != endWhat) {
                     this._syntax_error("Mismatched end tag", endWhat);
                 }
-                this.flushOutput();
-                const endString = startWhat.tag.onTagEnd(startWhat.kwargs, startWhat.args, this);
+                let endString = startWhat.tag.onTagEnd(startWhat.kwargs, startWhat.args, this);
+                if (endString instanceof Promise) {
+                    endString = await endString;
+                }
                 if (endString) {
                     this.code.addLine(endString);
                 }
+                this.flushOutput();
             }
             else {
                 // Literal content. Output if not empty.
@@ -186,7 +199,7 @@ class Tess {
             this.buffer = item;
         }
         else if (item instanceof LanguageHandler) {
-            let languages = args[0].flat(Infinity).concat(item.languages);
+            let languages = [args[0] || []].flat(Infinity).concat(item.languages);
             for (const lang of languages) {
                 this.languageHandlers[lang] = item;
             }
@@ -213,7 +226,11 @@ class Tess {
      */
     async render(context = null) {
         // Make the complete context we'll use.
-        return await this.code.getRenderFunction(context)(context, this._execute_code.bind(this));
+        let result = await this.code.getRenderFunction(context)(context, this._execute_code.bind(this));
+        return result;
+    }
+    getCode() {
+        return this.code.toString();
     }
     flushOutput() {
         this.code.addLine(this.buffer.flush());

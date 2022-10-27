@@ -6,7 +6,7 @@
 		"lib": ["es2020", "DOM"],
 		"outDir": "../dist/",
 		"declaration": true,
-		"declarationDir": "../dist/",
+		"declarationDir": "../typings/",
 		"sourceMap": true,
 		"allowSyntheticDefaultImports": true
 	},

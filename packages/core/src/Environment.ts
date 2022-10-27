@@ -4,7 +4,9 @@ import { EachTag } from "./tags/EachTag.js";
 import { ElseIfTag } from "./tags/ElseIfTag.js";
 import { ElseTag } from "./tags/ElseTag.js";
 import { IfTag } from "./tags/IfTag.js";
+import { IncludeCommand } from "./tags/IncludeCommand.js";
 import { LangCommand } from "./tags/LangCommand.js";
+import { RequireCommand } from "./tags/RequireCommand.js";
 import { Environment } from "./typings.js";
 
 
@@ -16,7 +18,9 @@ const DEFAULT_ENVIRONMENT: Environment = {
 	"elif": ElseIfTag,
 	"else": ElseTag,
 	"lang": LangCommand,
-	"code": CodeTag
+	"code": CodeTag,
+	"include": IncludeCommand,
+	"require": RequireCommand,
 }
 
 export { DEFAULT_ENVIRONMENT }

@@ -1,6 +1,6 @@
 {
-	"name": "@tess/cli",
-	"version": "1.0.0",
+	"name": "@tess-engine/cli",
+	"version": "0.0.2",
 	"type": "module",
 	"description": "Command line interface for tess template engine.",
 	"main": "dist/index.js",
@@ -14,6 +14,7 @@
 	"author": "letsmoe",
 	"license": "MIT",
 	"dependencies": {
+		"@tess-engine/core": "file:../core",
 		"colarg": "^2.0.1"
 	},
 	"devDependencies": {

@@ -4,13 +4,13 @@ declare class Tag {
     name: string;
     options: TagOptions;
     constructor(name?: string, options?: TagOptions);
-    onUse(options: TessOptions, kwargs: Kwargs | string, ...args: Args): void;
+    onUse(options: TessOptions, kwargs: Kwargs | string, ...args: Args): void | never;
     /**
      * A function that is called once a matching tag has been found.
      * It should return a string in JS format which can be executed later on.
      * @returns A string which will be inserted at the beginning of the tag, this will end up in the compiled code.
      */
-    onTagStart(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void;
+    onTagStart(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void | Promise<string>;
     /**
      * A function that is called once a matching tag has ended.
      * It should return a string in JS format which can be executed later on.
@@ -18,6 +18,6 @@ declare class Tag {
      * @param args A list of arguments which were passed to the directive.
      * @returns A string which will be inserted at the end of the tag, this will end up in the compiled code.
      */
-    onTagEnd(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void;
+    onTagEnd(kwargs: Kwargs | string, args?: Args, caller?: Tess): string | void | Promise<string>;
 }
 export { Tag };

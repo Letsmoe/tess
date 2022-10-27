@@ -1,7 +1,6 @@
 import { CodeBuilder } from "./CodeBuilder.js";
 import { DEFAULT_ENVIRONMENT } from "./Environment.js";
 import { LanguageHandler } from "./LanguageHandler.js";
-import { Tag } from "./Tag.js";
 import { TextBuffer } from "./TextBuffer.js";
 import { Args, Environment, Kwargs, TessOptions } from "./typings.js";
 
@@ -24,11 +23,19 @@ class Tess {
 	private code = new CodeBuilder();
 	private buffer = defaultBuffer;
 	private opsStack = [];
+	public getOptions(): TessOptions {
+		return Object.assign({}, this.options);
+	}
+
+	public getEnvironment(): Environment {
+		return this.environment;
+	}
+
 	/**
 	 *
 	 * @param text The text to construct a template base from
 	 */
-	public compile(text: string) {
+	public async compile(text: String) {
 		this.code = new CodeBuilder();
 		this.buffer = defaultBuffer;
 		this.opsStack = [];
@@ -62,7 +69,7 @@ class Tess {
 				const tagName = words[0]
 				// Check if the tag name exists in the environment.
 				if (this.environment.hasOwnProperty(tagName)) {
-					let beginString: string | void, kwargs: Kwargs | string, args: Args;
+					let beginString: string | void | Promise<string>, kwargs: Kwargs | string, args: Args;
 					// If it is present in the environment, parse the arguments and keywords arguments and call the onBegin and callback method on the Tag.
 					const tag = new (this.environment[tagName])();
 					const argString: string = token.substring(2 + tagName.length, token.length - 1).trim();
@@ -77,16 +84,20 @@ class Tess {
 
 					beginString = tag.onTagStart(kwargs, args, this);
 					// We want to push the begin string right onto our code.
+					if (beginString instanceof Promise) {
+						beginString = await beginString;
+					}
 					if (beginString) {
 						code.addLine(beginString);
 					}
 					tag.onUse(this.options, kwargs, args);
 					
 					if (tag.options.selfClosing === true) {
-						// If the tag is self-closing, we don't need to push the name onto the operation stack.
-						// We can also just call the onEnd method right away.
-						const endString = tag.onTagEnd(kwargs, args);
+						let endString = tag.onTagEnd(kwargs, args);
 						// Add the code to our codeBuilder
+						if (endString instanceof Promise) {
+							endString = await endString;
+						}
 						if (endString) {
 							code.addLine(endString);
 						}
@@ -116,13 +127,15 @@ class Tess {
 					this._syntax_error("Mismatched end tag", endWhat);
 				}
 
-				this.flushOutput();
+				let endString = startWhat.tag.onTagEnd(startWhat.kwargs, startWhat.args, this);
 
-				const endString = startWhat.tag.onTagEnd(startWhat.kwargs, startWhat.args, this);
-
+				if (endString instanceof Promise) {
+					endString = await endString;
+				}
 				if (endString) {
 					this.code.addLine(endString);
 				}
+				this.flushOutput();
 			} else {
 				// Literal content. Output if not empty.
 				if (token.match(/[^\t \r]/g)) {
@@ -203,7 +216,7 @@ class Tess {
 		if (item instanceof TextBuffer) {
 			this.buffer = item;
 		} else if (item instanceof LanguageHandler) {
-			let languages = args[0].flat(Infinity).concat(item.languages);
+			let languages = [args[0] || []].flat(Infinity).concat(item.languages);
 			for (const lang of languages) {
 				this.languageHandlers[lang] = item;
 			}
@@ -233,10 +246,15 @@ class Tess {
 	 */
 	public async render(context = null) {
 		// Make the complete context we'll use.
-		return await this.code.getRenderFunction(context)(
+		let result = await this.code.getRenderFunction(context)(
 			context,
 			this._execute_code.bind(this)
 		);
+		return result;
+	}
+
+	public getCode(): string {
+		return this.code.toString();
 	}
 
 	private flushOutput() {

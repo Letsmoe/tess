@@ -11,20 +11,18 @@ class CodeTag extends Tag {
 
 	public onTagStart(kwargs: string | Kwargs, args?: Args, caller?: Tess): string | void {
 		this.buffer = new TextBuffer();
-		this.buffer.onAdd = (value: string, buffer: string[]) => {
-			buffer[buffer.length - 1] = JSON.parse(value)
-		}
 		caller.attach(this.buffer);
 	}
 
 	public onTagEnd(kwargs: Kwargs, args?: Args, caller?: Tess): string | void {
-		caller.detach(this.buffer);
+		let code = "";
 		if (kwargs.var) {
-			return `let ${kwargs.var} = await _execute_code("${kwargs.lang || caller.options.defaultLanguage}", [${this.buffer.flush()}])`;
+			code = `let ${kwargs.var} = await _execute_code("${kwargs.lang || caller.options.defaultLanguage}", [${this.buffer.flush()}])`;
 		} else {
-			return `await _execute_code("${kwargs.lang || caller.options.defaultLanguage}", [${this.buffer.flush()}])`;
+			code = `await _execute_code("${kwargs.lang || caller.options.defaultLanguage}", [${this.buffer.flush()}])`;
 		}
-		
+		caller.detach(this.buffer);
+		return code;
 	}
 }
 

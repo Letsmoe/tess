@@ -3,7 +3,7 @@ import { Tess } from "./Tess.js";
 
 type Kwargs = {[key: string]: any};
 type Args = any[];
-type Environment = {[key: string]: Tag};
+type Environment = {[key: string]: typeof Tag};
 
 interface TagOptions {
 	selfClosing?: boolean;

@@ -1,6 +1,6 @@
 {
-	"name": "@tess/core",
-	"version": "1.0.0",
+	"name": "@tess-engine/core",
+	"version": "0.0.3",
 	"type": "module",
 	"description": "A general purpose templating engine.",
 	"main": "dist/index.js",
