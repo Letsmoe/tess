@@ -12,6 +12,11 @@ let engine = new Tess({ defaultLanguage: "javascript" });
 engine.compile(`
 # Hey There!
 {#require ".gitattributes"}
+
+{#define "name" \`["Some Value"]\`}
+
+{{name}}
+
 `);
 let output = await engine.render({
     "__HEADINGS__": [

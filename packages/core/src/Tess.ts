@@ -167,15 +167,26 @@ class Tess {
 		const args: Args = [];
 		// At first we can remove the keywords arguments since they are the easiest to parse.
 		// For now we just want to find strings as values.
-		str = str.replace(/([A-z0-9?!-_.;]+)=(.*),?/g, (all, name, value) => {
-			kwargs[name] = JSON.parse(value);
+		// This RegExp will match strings like this: name="string value" value=`["value to be parsed...", 123, true]`
+		str = str.replace(/([A-z0-9?:!?^\-_]+)=(?:(?=")"([^"\\]*(?:\\.[^"\\]*)*)"|`([^`\\]*(?:\\.[^`\\]*)*)`)/g, (all, name, whenString, whenToParse) => {
+			if (whenString) {
+				kwargs[name] = whenString;
+			} else if (whenToParse) {
+				kwargs[name] = JSON.parse(whenToParse)
+			}
 			return "";
 		})
 		
 		// Now we can run over the argument and push them into the args array.
-		const matches = str.split(/(?<=")\s*,/).map(x => x.trim()).filter(x => x);
-		for (const match of matches) {
-			args.push(JSON.parse(match))
+		const matches = str.matchAll(/(?:(?=")"([^"\\]*(?:\\.[^"\\]*)*)"|`([^`\\]*(?:\\.[^`\\]*)*)`)/g);
+		for (const matchArray of matches) {
+			if (matchArray[1]) {
+				// Ordinary string
+				args.push(matchArray[1]);
+			} else if (matchArray[2]) {
+				// Has to be parsed.
+				args.push(JSON.parse(matchArray[2]));
+			}
 		}
 
 		return { kwargs, args };

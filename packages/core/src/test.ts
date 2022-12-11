@@ -15,6 +15,11 @@ let engine = new Tess({defaultLanguage: "javascript"})
 engine.compile(`
 # Hey There!
 {#require ".gitattributes"}
+
+{#define "name" \`["Some Value"]\`}
+
+{{name}}
+
 `)
 
 

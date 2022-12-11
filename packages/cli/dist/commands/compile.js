@@ -1,6 +1,7 @@
 import * as fs from "fs";
-import { Tess } from "@tess/core";
+import { Tess } from "@tess-engine/core";
 import path from "path";
+import { Markdown } from "../environments/markdown.js";
 function resolveRelative(from, to) {
     return path.join(process.cwd(), path.relative(from, to));
 }
@@ -76,7 +77,8 @@ function compileContent(content, fileName = null, environment = {}) {
         converter.compile(content);
         // Get the output
         converter.render(Object.assign(environment, {
-            __FILE__: fileName
+            __FILE__: fileName,
+            Markdown: new Markdown(content)
         })).then((output) => {
             resolve(output);
         });
