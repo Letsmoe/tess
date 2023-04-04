@@ -1,0 +1,1 @@
+{"version":3,"file":"LanguageHandler.js","sourceRoot":"","sources":["../src/LanguageHandler.ts"],"names":[],"mappings":"AAAA,MAAM,eAAe;IACpB,YAA0B,SAAmB;QAAnB,cAAS,GAAT,SAAS,CAAU;IAE7C,CAAC;IAEM,OAAO,CAAC,IAAc;QAC5B,MAAM,IAAI,KAAK,CAAC,0EAA0E,CAAC,CAAC;IAC7F,CAAC;CACD;AAED,OAAO,EAAE,eAAe,EAAE,CAAA"}

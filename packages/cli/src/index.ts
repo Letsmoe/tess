@@ -42,5 +42,4 @@ parser.addCommand({
 }, compile)
 
 parser.enableHelp();
-
-const args = parser.getArgs();
+parser.run()

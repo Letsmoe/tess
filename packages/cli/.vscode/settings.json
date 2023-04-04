@@ -1,0 +1,9 @@
+{
+    "files.exclude": {
+        "dist": true,
+        "typings": true,
+        "package-lock.json": true,
+        "node_modules": true
+    },
+    "workspace.isHidden": true
+}

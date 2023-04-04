@@ -1,7 +1,4 @@
-function getMatchArray(regexp, content) {
-    return Array.from(content.matchAll(regexp));
-}
-class Markdown {
+class MarkdownExtension {
     constructor(content) {
         this.content = "";
         this.content = content;
@@ -30,5 +27,5 @@ class Markdown {
         return markdown;
     }
 }
-export { Markdown };
+export { MarkdownExtension };
 //# sourceMappingURL=markdown.js.map

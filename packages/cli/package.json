@@ -14,7 +14,7 @@
 	"author": "letsmoe",
 	"license": "MIT",
 	"dependencies": {
-		"@tess-engine/core": "file:../core",
+		"@tess-engine/core": "^0.1.0",
 		"colarg": "^2.0.1"
 	},
 	"devDependencies": {

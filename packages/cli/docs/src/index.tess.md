@@ -1,9 +1,11 @@
 # Index
 
-{#define "name", "Moritz Utcke"}
+{#require "module.tess.md" #}
 
-Hi, {{name}}
+{#define "name", "Moritz Utcke" #}
 
-{#each char of name}
-{{char}}
-{/each}
+```
+{#each i of name #}
+Number {{ i }}
+{/each/}
+```

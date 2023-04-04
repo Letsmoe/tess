@@ -1,8 +1,4 @@
-function getMatchArray(regexp: RegExp, content: string) {
-	return Array.from(content.matchAll(regexp));
-}
-
-class Markdown {
+class MarkdownExtension {
 	private content: string = "";
 	public constructor(content: string) {
 		this.content = content;
@@ -39,4 +35,4 @@ class Markdown {
 	}
 }
 
-export { Markdown }
+export { MarkdownExtension }
